@@ -24,8 +24,8 @@ case "$LINUX" in
     PKG_PATCH_DIRS="amlogic"
     ;;
   rockchip-4.4)
-    PKG_VERSION="e0f180116144c561d6357493e1a89a2461fbc796"
-    PKG_URL="https://github.com/mrfixit2001/rockchip-kernel.git"
+    PKG_VERSION="027126312057e56a7cf4bc48e9ff6a4fce84a456"
+    PKG_URL="https://github.com/event/rockchip-kernel.git"
     ;;
   raspberrypi)
     PKG_VERSION="e24f334452d6b2f123e5e277102eba1a52d28cee" # 5.3.0
