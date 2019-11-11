@@ -227,7 +227,7 @@ post_makeinstall_target() {
   safe_remove $INSTALL/etc/modules-load.d
   ln -sf /storage/.config/modules-load.d $INSTALL/etc/modules-load.d
   safe_remove $INSTALL/etc/systemd/systemd.conf.d
-  ln -sf /storage/.config/systemd.conf.d $INSTALL/etc/systemd/systemd.conf.d
+  ln -sf /storage/.config/system.conf.d $INSTALL/etc/systemd/system.conf.d
   safe_remove $INSTALL/etc/systemd/logind.conf.d
   ln -sf /storage/.config/logind.conf.d $INSTALL/etc/systemd/logind.conf.d
   safe_remove $INSTALL/etc/systemd/sleep.conf.d
