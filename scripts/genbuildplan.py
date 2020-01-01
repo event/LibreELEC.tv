@@ -1,10 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
-from __future__ import print_function
 import sys, os, codecs, json, argparse, re
 
 ROOT_PKG = "__root__"
@@ -229,7 +228,7 @@ def get_build_steps(args, nodes, trigger_pkgs, built_pkgs):
     for pkg in resolved:
         if pkg.fqname not in built_pkgs:
             built_pkgs.append(pkg.fqname)
-            task = "build" if pkg.fqname.endswith(":host") or not install else "install"
+            task = "build" if pkg.fqname.endswith(":host") or pkg.fqname.endswith(":init") or not install else "install"
             yield(task, pkg.fqname)
 
 # Reduce the complete list of packages to a map of those packages that will

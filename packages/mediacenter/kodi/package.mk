@@ -5,29 +5,22 @@
 PKG_NAME="kodi"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
-PKG_DEPENDS_TARGET="toolchain JsonSchemaBuilder:host TexturePacker:host Python2 zlib systemd lzo pcre swig:host libass curl fontconfig fribidi tinyxml libjpeg-turbo freetype libcdio taglib libxml2 libxslt rapidjson sqlite ffmpeg crossguid giflib libdvdnav libhdhomerun libfmt lirc libfstrcmp flatbuffers:host flatbuffers"
+PKG_DEPENDS_TARGET="toolchain JsonSchemaBuilder:host TexturePacker:host Python3 zlib systemd lzo pcre swig:host libass curl fontconfig fribidi tinyxml libjpeg-turbo freetype libcdio taglib libxml2 libxslt rapidjson sqlite ffmpeg crossguid giflib libdvdnav libhdhomerun libfmt lirc libfstrcmp flatbuffers:host flatbuffers"
 PKG_LONGDESC="A free and open source cross-platform media player."
 PKG_BUILD_FLAGS="+speed"
-PKG_TOOLCHAIN="cmake-make"
 
 PKG_PATCH_DIRS="$KODI_VENDOR"
 
 case $KODI_VENDOR in
   raspberrypi)
-    PKG_VERSION="newclock5_18.4-Leia"
-    PKG_SHA256="2d3c864202a391dfe60b7eeade27a6ce1a9dfac2d0fc80add70cf5bd8318dadf"
+    PKG_VERSION="0d67271fd3001d4f59e9a5211269ae147e7e6fb1"
+    PKG_SHA256="8e56139f83161798bb75925610ebcf221d456379d299beb6b8b49cdff10e3dd3"
     PKG_URL="https://github.com/popcornmix/xbmc/archive/$PKG_VERSION.tar.gz"
     PKG_SOURCE_NAME="kodi-$KODI_VENDOR-$PKG_VERSION.tar.gz"
     ;;
-  rockchip)
-    PKG_VERSION="rockchip_18.4-Leia"
-    PKG_SHA256="16a64493ba1c91f22064444970147b505e6d38d368012f4ea88c68c1416a2ef2"
-    PKG_URL="https://github.com/kwiboo/xbmc/archive/$PKG_VERSION.tar.gz"
-    PKG_SOURCE_NAME="kodi-$KODI_VENDOR-$PKG_VERSION.tar.gz"
-    ;;
   *)
-    PKG_VERSION="18.4-Leia"
-    PKG_SHA256="bf2be186d8ae5b5377e43c06a538012bb9f51a0e98f8244b70a401006861d110"
+    PKG_VERSION="6e15fcb9ff05ed7463d69083b2fa2fd702f3abd0"
+    PKG_SHA256="6f133b742e96755709d2ca04b2e9ed76640d60421847c472836598450e1ec60c"
     PKG_URL="https://github.com/xbmc/xbmc/archive/$PKG_VERSION.tar.gz"
     PKG_SOURCE_NAME="kodi-$PKG_VERSION.tar.gz"
     ;;
@@ -49,7 +42,7 @@ configure_package() {
 
   if [ "$DISPLAYSERVER" = "x11" ]; then
     PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET libX11 libXext libdrm libXrandr"
-    KODI_XORG="-DCORE_PLATFORM_NAME=x11"
+    KODI_XORG="-DCORE_PLATFORM_NAME=x11 -DX11_RENDER_SYSTEM=gl"
   elif [ "$DISPLAYSERVER" = "weston" ]; then
     PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET wayland waylandpp"
     CFLAGS="$CFLAGS -DMESA_EGL_NO_X11_HEADERS"
@@ -220,9 +213,8 @@ configure_package() {
                          -DPYTHON_EXECUTABLE=$TOOLCHAIN/bin/$PKG_PYTHON_VERSION \
                          -DPYTHON_INCLUDE_DIRS=$SYSROOT_PREFIX/usr/include/$PKG_PYTHON_VERSION \
                          -DGIT_VERSION=$PKG_VERSION \
-                         -DWITH_FFMPEG=$(get_build_dir ffmpeg) \
+                         -DFFMPEG_PATH=$SYSROOT_PREFIX/usr \
                          -DENABLE_INTERNAL_FFMPEG=OFF \
-                         -DFFMPEG_INCLUDE_DIRS=$SYSROOT_PREFIX/usr \
                          -DENABLE_INTERNAL_CROSSGUID=OFF \
                          -DENABLE_UDEV=ON \
                          -DENABLE_DBUS=ON \
@@ -303,6 +295,9 @@ post_makeinstall_target() {
     cp -R $PKG_DIR/config/repository.kodi.game $INSTALL/usr/share/kodi/addons
 
   mkdir -p $INSTALL/usr/share/kodi/config
+
+  ln -sf /run/libreelec/cacert.pem $INSTALL/usr/share/kodi/system/certs/cacert.pem
+
   mkdir -p $INSTALL/usr/share/kodi/system/settings
 
   $PKG_DIR/scripts/xml_merge.py $PKG_DIR/config/guisettings.xml \
@@ -333,7 +328,9 @@ post_makeinstall_target() {
   xmlstarlet ed -L --subnode "/addons" -t elem -n "addon" -v "os.libreelec.tv" $ADDON_MANIFEST
   xmlstarlet ed -L --subnode "/addons" -t elem -n "addon" -v "os.openelec.tv" $ADDON_MANIFEST
   xmlstarlet ed -L --subnode "/addons" -t elem -n "addon" -v "repository.libreelec.tv" $ADDON_MANIFEST
-  xmlstarlet ed -L --subnode "/addons" -t elem -n "addon" -v "service.libreelec.settings" $ADDON_MANIFEST
+  if [ -n "$DISTRO_PKG_SETTINGS" ]; then
+    xmlstarlet ed -L --subnode "/addons" -t elem -n "addon" -v "$DISTRO_PKG_SETTINGS_ID" $ADDON_MANIFEST
+  fi
 
   if [ "$DRIVER_ADDONS_SUPPORT" = "yes" ]; then
     xmlstarlet ed -L --subnode "/addons" -t elem -n "addon" -v "script.program.driverselect" $ADDON_MANIFEST
@@ -352,6 +349,9 @@ post_makeinstall_target() {
     mkdir -p $INSTALL/usr/share/kodi/media/Fonts
       cp $PKG_DIR/fonts/*.ttf $INSTALL/usr/share/kodi/media/Fonts
   fi
+
+  # Compile kodi Python site-packages to .pyc bytecode, and remove .py source code
+  python_compile $INSTALL/usr/lib/$PKG_PYTHON_VERSION/site-packages/kodi
 
   debug_strip $INSTALL/usr/lib/kodi/kodi.bin
 }
